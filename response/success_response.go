@@ -29,6 +29,26 @@ func NewSuccessResponse(data interface{}, status string, message string) Respons
 	}
 }
 
+func NewSuccessResponseWithMeta(data, meta interface{}, status string, message string) Response {
+	var httpStatusCode int
+	switch status {
+	case StatCreated:
+		httpStatusCode = http.StatusCreated
+		break
+	default:
+		httpStatusCode = http.StatusOK
+		break
+	}
+
+	return SuccessResponse{
+		httpStatusCode: httpStatusCode,
+		status:         status,
+		message:        message,
+		data:           data,
+		meta:           meta,
+	}
+}
+
 func (r SuccessResponse) Data() interface{} {
 	return r.data
 }

@@ -11,7 +11,10 @@ import (
 	"github.com/gorilla/mux"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jeri06/majoo/auth"
 	"github.com/jeri06/majoo/config"
+	"github.com/jeri06/majoo/middleware"
+	"github.com/jeri06/majoo/order"
 	"github.com/jeri06/majoo/response"
 	"github.com/jeri06/majoo/server"
 	_ "github.com/joho/godotenv/autoload" //
@@ -22,7 +25,7 @@ import (
 var (
 	cfg          *config.Config
 	utcLocation  *time.Location
-	indexMessage string = "Application is running properly"
+	indexMessage string = "Application is running properly222"
 )
 
 func init() {
@@ -48,8 +51,18 @@ func main() {
 	db.SetMaxOpenConns(cfg.Mysql.MaxOpenConnections)
 	db.SetMaxIdleConns(cfg.Mysql.MaxIdleConnections)
 
+	session := middleware.NewJwtMiddleware()
 	router := mux.NewRouter()
-	router.HandleFunc("/order", index)
+	router.HandleFunc("/order-service", index)
+
+	authRepository := auth.NewAuthRepository(db)
+	authUsecase := auth.NewAuthUsecase(authRepository)
+	auth.NewHTTPHandlerAuth(router, authUsecase, session)
+
+	orderRepository := order.NewOrderRepository(db)
+	orderUsecase := order.NewOrderUsecase(orderRepository)
+
+	order.NewHTTPHandlerOrder(router, orderUsecase, session)
 
 	handler := cors.New(cors.Options{
 		AllowedOrigins:   cfg.Application.AllowedOrigins,
